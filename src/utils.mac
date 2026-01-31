@@ -1,19 +1,18 @@
-/* src/utils.mac */
+/* src/utils.mac  */
 
-/* Função principal que roda tudo */
 run_simulation(duration) := block(
     [accels, ar_num, at_num, r0, v0, init_state, sol, xy_points],
     
     print("1. Derivando física..."),
     accels: get_accelerations(),
     
-    /* Prepara para RKF45 */
+    /* Prepara equações */
     ar_num: subst([diff(r,t)=vr, diff(theta,t)=w, r=r, theta=th], accels[1]),
     at_num: subst([diff(r,t)=vr, diff(theta,t)=w, r=r, theta=th], accels[2]),
     
-    /* Condições Iniciais (LEO) */
-    r0: float(R_earth + 400000),
-    v0: float(sqrt(G_const * M_earth / r0)) * 1.1, /* Levemente elíptico */
+    /* Condições Iniciais (Altitude 400km) */
+    r0: float(R_earth + 400*1000),
+    v0: float(sqrt(G_const * M_earth / r0)) * 1.2, /* 1.2x = Elipse */
     init_state: [r0, 0.0, 0.0, v0/r0],
     
     print("2. Integrando trajetória..."),
@@ -25,18 +24,39 @@ run_simulation(duration) := block(
         absolute_tolerance=1e-8
     ),
     
-    print("3. Gerando dados de plotagem..."),
-    xy_points: map(lambda([row], [row[2]*cos(row[4]), row[2]*sin(row[4])]), sol),
+    print("3. Convertendo Metros -> Kilômetros..."),
+    xy_points: map(
+        lambda([row], [ (row[2]*cos(row[4]))/1000.0, (row[2]*sin(row[4]))/1000.0 ]), 
+        sol
+    ),
     
-    /* Retorna os pontos para quem chamou poder plotar ou salvar */
     return(xy_points)
 )$
 
-/* Função auxiliar de plotagem */
 plot_trajectory(points_data) := draw2d(
-    title = "Orbita Modular",
-    user_preamble = "set grid; set size square;",
-    color = blue, points([[0,0]]), key="Terra",
-    color = red, points_joined=true, point_size=0, key="Satélite",
+    title = "Simulador Orbital",
+    xlabel = "x (km)",
+    ylabel = "y (km)",
+    
+    /* Trava a proporção 1:1 entre os eixos */
+    proportional_axes = xy,
+    
+    xrange = [-20000, 20000],
+    yrange = [-20000, 20000],
+
+    user_preamble = "set grid",
+    /* 1. DESENHAR A TERRA (Azul Sólido) */
+    
+    fill_color = blue,
+    color = blue,
+    /* ellipse(centro_x, centro_y, raio_x, raio_y, angulo_ini, angulo_fim) */
+    ellipse(0, 0, 6371, 6371, 0, 360),
+    
+    /* 2. DESENHAR A ÓRBITA (Linha Vermelha) */
+    color = red,
+    key = "Satelite",
+    points_joined = true,
+    point_size = 0,
+    line_width = 2,
     points(points_data)
 )$
