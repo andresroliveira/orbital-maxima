@@ -13,7 +13,8 @@ load("draw")$
 print("--> Carregando módulos...")$
 load("constants.mac")$
 load("physics.mac")$
-load("utils.mac")$
+load("simulation.mac")$
+load("graphics.mac")$
 
 print("--> Módulos carregados.")$
 

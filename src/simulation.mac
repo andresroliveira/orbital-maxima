@@ -1,4 +1,4 @@
-/* src/utils.mac  */
+/* simulation.mac */
 
 run_simulation(duration) := block(
     [accels, ar_num, at_num, r0, v0, init_state, sol, xy_points],
@@ -35,32 +35,4 @@ run_simulation(duration) := block(
     ),
     
     return(xy_points)
-)$
-
-plot_trajectory(points_data) := draw2d(
-    title = "Simulador Orbital",
-    xlabel = "x (km)",
-    ylabel = "y (km)",
-    
-    /* Trava a proporção 1:1 entre os eixos */
-    proportional_axes = xy,
-    
-    xrange = [-20000, 20000],
-    yrange = [-20000, 20000],
-
-    user_preamble = "set grid",
-    /* 1. DESENHAR A TERRA (Azul Sólido) */
-    
-    fill_color = blue,
-    color = blue,
-    /* ellipse(centro_x, centro_y, raio_x, raio_y, angulo_ini, angulo_fim) */
-    ellipse(0, 0, 6371, 6371, 0, 360),
-    
-    /* 2. DESENHAR A ÓRBITA (Linha Vermelha) */
-    color = red,
-    key = "Satelite",
-    points_joined = true,
-    point_size = 0,
-    line_width = 1,
-    points(points_data)
 )$
