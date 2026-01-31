@@ -1,0 +1,84 @@
+#+TITLE: Simulador de Mecânica Orbital com Perturbação J2
+#+AUTHOR: Andrês
+#+DATE: 2026-01-31
+#+OPTIONS: toc:nil num:nil
+#+STARTUP: inlineimages
+#+STARTUP: latexpreview
+
+* Visão Geral
+Este projeto é um simulador de mecânica celeste desenvolvido em *Maxima CAS* (Computer Algebra System).
+
+Diferente de simuladores numéricos comuns, este projeto utiliza a capacidade simbólica do Maxima para *derivar* as equações de movimento a partir do formalismo Lagrangiano antes de resolvê-las numericamente.
+
+O foco principal é a simulação de órbitas em LEO (Low Earth Orbit) considerando a **Perturbação J2** (achatamento da Terra), demonstrando visualmente a precessão do plano orbital (o efeito de "dança" da elipse).
+
+* Resultados
+A simulação gera automaticamente uma visualização da trajetória em relação à Terra.
+
+#+CAPTION: Trajetória orbital com precessão devido ao efeito J2
+#+ATTR_HTML: :width 600px
+[[./resultado_orbita.png]]
+
+* Estrutura do Projeto
+O projeto segue uma arquitetura modular para separar constantes físicas, modelagem matemática, simulação numérica e renderização gráfica.
+
+#+BEGIN_SRC text
+  orbital-maxima/
+  ├── orbital.mac          # Script Mestre (Entry Point)
+  ├── resultado_orbita.png # Artefato gerado (Output)
+  └── src/
+  ├── constants.mac    # Constantes físicas (G, M_terra, J2, etc.)
+  ├── physics.mac      # Derivação simbólica (Lagrangiana -> EOM)
+  ├── simulation.mac   # Configuração do integrador Runge-Kutta (RKF45)
+  └── graphics.mac     # Motor de renderização (Draw2d/Gnuplot)
+#+END_SRC
+
+* Fundamentação Física
+** 1. Formalismo Lagrangiano
+As equações de movimento não são "hardcoded". Elas são derivadas automaticamente pelo Maxima resolvendo as equações de Euler-Lagrange:
+
+\begin{equation}
+\frac{d}{dt} \left( \frac{\partial L}{\partial \dot{q}} \right) - \frac{\partial L}{\partial q} = 0
+\end{equation}
+
+Onde a Lagrangiana $L = T - V$.
+
+** 2. Potencial Gravitacional com J2
+Para simular uma órbita realista, substituímos o potencial Kepleriano simples por um potencial que considera o momento de quadrupolo da Terra ($J_2$), responsável pelo achatamento nos polos:
+
+
+\begin{equation}
+V(r) = -\frac{GMm}{r} \left[ 1 - J_2 \left( \frac{R_e}{r} \right)^2 P_2(\sin \phi) \right]
+\end{equation}
+
+No código (~src/physics.mac~), utilizamos a aproximação para a órbita equatorial, que gera a precessão do periastro observada no gráfico.
+
+* Como Executar
+** Pré-requisitos
+- Maxima (testado na versão 5.46.0+)
+- Gnuplot (para renderização gráfica)
+
+** Via Terminal (Batch Mode)
+Para rodar a simulação e gerar o arquivo PNG sem abrir interface gráfica:
+
+#+BEGIN_SRC bash
+  maxima -b orbital.mac
+#+END_SRC
+
+** Via Emacs (Interactive Mode)
+1. Abra o arquivo ~orbital.mac~.
+2. Envie o buffer para o processo Maxima (~C-c C-b~ no `maxima-mode`).
+3. O gráfico será gerado na pasta raiz.
+
+* Configurações
+Você pode ajustar os parâmetros da simulação editando o arquivo ~orbital.mac~ ou os módulos em ~src/~:
+
+| Parâmetro         | Arquivo             | Descrição                                                |
+|-------------------+---------------------+----------------------------------------------------------|
+| ~tempo_simulacao~ | ~orbital.mac~       | Duração total da órbita em segundos                      |
+| ~J2_earth~        | ~src/constants.mac~ | Fator de forma da Terra (aumente para exagerar o efeito) |
+| ~dimensions~      | ~src/graphics.mac~  | Resolução da imagem de saída (ex: [1920, 1080])          |
+
+
+* Licença
+Este projeto é distribuído sob a licença MIT. 
