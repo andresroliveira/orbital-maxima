@@ -1,19 +1,30 @@
-/* src/physics.mac */
+/* src/physics.mac - Com Perturbação J2 (Achatamento da Terra) */
 
 get_accelerations() := block(
-    [T, V, L, eq_r, eq_theta, sol_accel],
+    [T, V, L, eq_r, eq_theta, sol_accel, term_J2],
+    
     depends([r, theta], t),
     
-    /* Energia Cinética e Potencial Simples */
+    /* 1. Energia Cinética */
     T: (1/2) * m_sat * (diff(r,t)^2 + r^2 * diff(theta,t)^2),
-    V: -G_const * M_earth * m_sat / r,
+    
+    /* 2. Potencial Gravitacional Realista */
+    /* Inclui o termo J2 (Earth Oblateness) */
+    /* V_real = V_kepler * (1 + J2_term) */
+    
+    /* Termo de perturbação para órbita equatorial */
+    term_J2: (J2_earth / 2) * (R_earth / r)^2,
+    
+    /* Potencial Corrigido (com m_sat!) */
+    V: (-G_const * M_earth * m_sat / r) * (1 + term_J2),
+    
     L: T - V,
     
-    /* Euler-Lagrange */
+    /* 3. Euler-Lagrange */
     eq_r: diff(diff(L, diff(r,t)), t) - diff(L, r) = 0,
     eq_theta: diff(diff(L, diff(theta,t)), t) - diff(L, theta) = 0,
     
-    /* Solver */
+    /* 4. Solver */
     sol_accel: solve([eq_r, eq_theta], [diff(r,t,2), diff(theta,t,2)]),
     
     return([rhs(sol_accel[1][1]), rhs(sol_accel[1][2])])

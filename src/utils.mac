@@ -2,6 +2,8 @@
 
 run_simulation(duration) := block(
     [accels, ar_num, at_num, r0, v0, init_state, sol, xy_points],
+
+    ratprint: false,
     
     print("1. Derivando física..."),
     accels: get_accelerations(),
@@ -21,7 +23,9 @@ run_simulation(duration) := block(
         [r, vr, th, w], 
         init_state, 
         [t, 0, duration],
-        absolute_tolerance=1e-8
+        absolute_tolerance=1e-8,
+        max_iterations=500000,
+        report=true
     ),
     
     print("3. Convertendo Metros -> Kilômetros..."),
@@ -57,6 +61,6 @@ plot_trajectory(points_data) := draw2d(
     key = "Satelite",
     points_joined = true,
     point_size = 0,
-    line_width = 2,
+    line_width = 1,
     points(points_data)
 )$

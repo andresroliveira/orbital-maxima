@@ -1,22 +1,36 @@
-/* orbital.mac - Carregador do Projeto */
+/* orbital.mac - Script Mestre e Executor */
+
+/* 1. LIMPEZA */
 kill(all)$
 
-/* Define diretórios de busca para não dar erro de arquivo */
+/* 2. SETUP DE CAMINHOS */
 file_search_maxima: append([".", "./src/"], file_search_maxima)$
 
-/* Carrega pacotes do sistema */
+/* 3. CARREGAR PACOTES E MÓDULOS */
 load("rkf45")$
 load("draw")$
 
-print("--> Carregando módulos do projeto...")$
-
-/* Carrega os scripts na ordem de dependência */
+print("--> Carregando módulos...")$
 load("constants.mac")$
 load("physics.mac")$
 load("utils.mac")$
 
-print("------------------------------------------------")$
-print("SISTEMA PRONTO.")$
-print("Para rodar: dados: run_simulation(20000)$")$
-print("Para ver:   plot_trajectory(dados)$")$
-print("------------------------------------------------")$
+print("--> Módulos carregados.")$
+
+/* ====================================================== */
+/* 4. EXECUÇÃO AUTOMÁTICA                                 */
+/* ====================================================== */
+
+/* Defina aqui quanto tempo você quer rodar */
+tempo_simulacao: 25000$ 
+
+print(printf(false, "--> Iniciando simulação de ~d segundos...", tempo_simulacao))$
+
+/* Roda e salva na variável 'dados' */
+dados: run_simulation(tempo_simulacao)$
+
+/* Plota o gráfico */
+print("--> Gerando gráfico...")$
+plot_trajectory(dados)$
+
+print("--> FIM. Se quiser mudar o tempo, edite orbital.mac e recarregue.")$
