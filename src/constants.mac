@@ -1,0 +1,6 @@
+/* src/constants.mac */
+G_const: 6.67430e-11$
+M_earth: 5.972e24$
+R_earth: 6.371e6$
+J2_earth: 1.0826e-3$ /* <--- Já deixaremos aqui para o próximo passo */
+m_sat: 1000$

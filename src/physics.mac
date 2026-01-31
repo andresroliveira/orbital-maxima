@@ -1,0 +1,23 @@
+/* src/physics.mac */
+
+/* Função que retorna as acelerações simbólicas */
+get_accelerations() := block(
+    [T, V, L, eq_r, eq_theta, sol_accel],
+    
+    depends([r, theta], t),
+    
+    /* Energia (Kepleriana Padrão) */
+    T: (1/2) * m_sat * (diff(r,t)^2 + r^2 * diff(theta,t)^2),
+    V: -G_const * M_earth / r, 
+    L: T - V,
+    
+    /* Euler-Lagrange */
+    eq_r: diff(diff(L, diff(r,t)), t) - diff(L, r) = 0,
+    eq_theta: diff(diff(L, diff(theta,t)), t) - diff(L, theta) = 0,
+    
+    /* Solver */
+    sol_accel: solve([eq_r, eq_theta], [diff(r,t,2), diff(theta,t,2)]),
+    
+    /* Retorna lista [acel_r, acel_theta] */
+    return([rhs(sol_accel[1][1]), rhs(sol_accel[1][2])])
+)$
