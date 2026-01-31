@@ -1,0 +1,134 @@
+/* ========================================================= */
+/* SIMULADOR DE MECÂNICA ORBITAL (LAGRANGIANA)         */
+/* PROJETO PORTFÓLIO MAXIMA                    */
+/* ========================================================= */
+
+/* 1. LIMPEZA E CONFIGURAÇÃO INICIAL */
+kill(all)$
+load("rkf45")$  /* Carrega o integrador numérico Runge-Kutta */
+load("draw")$   /* Carrega o pacote gráfico */
+
+print("--> Inicializando sistema...")$
+
+/* ========================================================= */
+/* 2. CONSTANTES FÍSICAS (SISTEMA TERRA-SATÉLITE)            */
+/* ========================================================= */
+G_const: 6.67430e-11$
+M_earth: 5.972e24$
+R_earth: 6.371e6$
+m_sat:   1000$ /* Massa do satélite (kg) */
+
+/* ========================================================= */
+/* 3. FÍSICA SIMBÓLICA (O CORAÇÃO DO PROJETO)                */
+/* ========================================================= */
+print("--> Derivando Equações de Movimento via Euler-Lagrange...")$
+
+/* Definir dependências: r e theta variam com o tempo t */
+depends([r, theta], t)$
+
+/* Energia Cinética (T) e Potencial (V) em Polares */
+T: (1/2) * m_sat * (diff(r,t)^2 + r^2 * diff(theta,t)^2)$
+V: -G_const * M_earth / r$
+L: T - V$
+
+/* Equações de Euler-Lagrange */
+eq_r: diff(diff(L, diff(r,t)), t) - diff(L, r) = 0$
+eq_theta: diff(diff(L, diff(theta,t)), t) - diff(L, theta) = 0$
+
+/* Resolver o sistema para isolar as acelerações (derivadas segundas) */
+sol_accel: solve([eq_r, eq_theta], [diff(r,t,2), diff(theta,t,2)])$
+
+/* Extrair os lados direitos das equações (as fórmulas de aceleração) */
+accel_r_sym: rhs(sol_accel[1][1])$
+accel_t_sym: rhs(sol_accel[1][2])$
+
+print("   [OK] Equações derivadas simbolicamente.")$
+
+/* ========================================================= */
+/* 4. PREPARAÇÃO PARA INTEGRAÇÃO NUMÉRICA                    */
+/* ========================================================= */
+
+/* O rkf45 não entende 'diff(r,t)'. Precisamos substituir por variáveis de estado:
+   r     -> r
+   dr/dt -> vr (velocidade radial)
+   theta -> th
+   dth/dt-> w  (velocidade angular)
+*/
+
+/* Substituição nas fórmulas simbólicas */
+ar_num: subst([diff(r,t)=vr, diff(theta,t)=w, r=r, theta=th], accel_r_sym)$
+at_num: subst([diff(r,t)=vr, diff(theta,t)=w, r=r, theta=th], accel_t_sym)$
+
+/* Definir as funções que o rkf45 vai chamar */
+/* O sistema de 1ª ordem é: dr/dt=vr, dvr/dt=ar_num, dth/dt=w, dw/dt=at_num */
+equations_list: [vr, ar_num, w, at_num]$
+variables_list: [r, vr, th, w]$
+
+/* ========================================================= */
+/* 5. DEFINIR CONDIÇÕES INICIAIS DA ÓRBITA                   */
+/* ========================================================= */
+/* Altitude de 400km (LEO) */
+r0: float(R_earth + 400000)$
+
+/* Velocidade para órbita circular teórica: v = sqrt(GM/r) */
+v_circ: float(sqrt(G_const * M_earth / r0))$
+
+/* Vamos aplicar uma perturbação para gerar uma elipse (1.2x a velocidade) */
+v_injection: v_circ * 1.2$
+
+/* Estado inicial: [raio, vel_radial, angulo, vel_angular] */
+/* vel_angular = v_tangencial / raio */
+init_state: [r0, 0.0, 0.0, v_injection/r0]$
+
+/* ========================================================= */
+/* 6. EXECUÇÃO DA SIMULAÇÃO (RKF45)                          */
+/* ========================================================= */
+print("--> Calculando trajetória (simulando 15000 segundos)...")$
+
+/* rkf45(equações, variáveis, estado_inicial, [t, inicio, fim]) */
+results: rkf45(
+    equations_list, 
+    variables_list, 
+    init_state, 
+    [t, 0, 15000],
+    absolute_tolerance=1e-8
+)$
+
+print("   [OK] Integração concluída.")$
+
+/* ========================================================= */
+/* 7. PROCESSAMENTO E PLOTAGEM                               */
+/* ========================================================= */
+
+/* Converter coordenadas Polares (r, th) para Cartesianas (x, y) para o gráfico */
+/* A lista 'results' tem formato: [t, r, vr, th, w] */
+xy_points: map(
+    lambda([row], [row[2]*cos(row[4]), row[2]*sin(row[4])]), 
+    results
+)$
+
+print("--> Gerando gráfico...")$
+
+draw2d(
+    title = "Simulação de Mecânica Orbital (Maxima Portfolio)",
+    /* Configurações visuais */
+    user_preamble = "set grid; set size square; set object 1 circle at 0,0 size 6.371e6 fc rgb 'blue' fillstyle solid",
+    xlabel = "Distância (m)",
+    ylabel = "Distância (m)",
+    
+    /* Legenda da Terra */
+    color = blue,
+    key = "Terra",
+    point_size = 2,
+    points([[0,0]]), /* Ponto central fictício apenas p/ legenda */
+
+    /* Legenda e Plot do Satélite */
+    color = red,
+    key = "Trajetória (Excentricidade alta)",
+    points_joined = true,
+    point_size = 0,
+    line_width = 2,
+    points(xy_points)
+)$
+
+print("--> Processo finalizado com sucesso.")$
