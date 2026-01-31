@@ -1,27 +1,26 @@
-/* src/utils.mac  */
+/* src/graphics.mac - Renderização Gráfica para Arquivo */
 
 plot_trajectory(points_data) := draw2d(
-    title = "Simulador Orbital",
+    title = "Simulador Orbital (Maxima + J2 Perturbation)",
     xlabel = "x (km)",
     ylabel = "y (km)",
     
-    /* Trava a proporção 1:1 entre os eixos */
+    terminal = png,
+    file_name = "resultado_orbita", /* Vai criar o arquivo 'resultado_orbita.png' */
+    dimensions = [1920, 1080],      /* Resolução Full HD para ficar "bonitinha" */
+    
+    /* 2. CONFIGURAÇÃO VISUAL */
     proportional_axes = xy,
+    user_preamble = "set grid", /* Liga a grade */
     
-    xrange = [-20000, 20000],
-    yrange = [-20000, 20000],
-
-    user_preamble = "set grid",
-    /* 1. DESENHAR A TERRA (Azul Sólido) */
-    
+    /* 3. A TERRA (Azul) */
     fill_color = blue,
     color = blue,
-    /* ellipse(centro_x, centro_y, raio_x, raio_y, angulo_ini, angulo_fim) */
     ellipse(0, 0, 6371, 6371, 0, 360),
     
-    /* 2. DESENHAR A ÓRBITA (Linha Vermelha) */
+    /* 4. O SATÉLITE (Vermelho) */
     color = red,
-    key = "Satelite",
+    key = "Trajetória",
     points_joined = true,
     point_size = 0,
     line_width = 1,
